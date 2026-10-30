@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dynamic Typing...</title>
+<link href="https://fonts.googleapis.com/css2?family=Chewy&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1d3b4f;--mut:#6a8799;--cy:#1fb9d6;--mint:#37d9ae;--sky:#8fd3ff;--line:rgba(110,175,200,.28);--glass:rgba(255,255,255,.72);--sh:0 10px 30px rgba(60,140,170,.16)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{font-family:'Hind Siliguri',system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,#eaf8ff,#e9fff7 55%,#f3ecff);overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+.chewy{font-family:Chewy,'Hind Siliguri',cursive;letter-spacing:.5px}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.screen.on{display:flex;animation:in .45s ease both}
+@keyframes in{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.ph{display:grid;place-items:center;width:100%;height:100%;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--c,#1fb9d6),#9be7ff);text-align:center;padding:6px}
+.press:active{transform:scale(.94)}
+.press{transition:transform .15s}
+/* profiles */
+#s-pick{justify-content:center}#s-pick h1{margin:0;font-size:clamp(30px,8vw,52px);text-align:center;line-height:1.1;padding:0 12px}
+#s-pick .sub{color:var(--mut);margin:8px 0 0;text-align:center;font-size:16px}
+.row{position:relative;width:100%;max-width:520px;--S:min(40vw,190px,23vh);height:calc(var(--S)*2.12);margin-top:min(5vh,36px)}
+.pf{--c:#1fb9d6;position:absolute;left:50%;top:0;margin-left:calc(var(--S)/-2);width:var(--S);animation:spinin .95s cubic-bezier(.2,.9,.3,1.1) both}
+.pf:nth-child(2){--c:#37d9ae;left:calc(50% - var(--S)*.58);top:calc(var(--S)*1.12);animation-delay:.12s}.pf:nth-child(3){--c:#8e9bff;left:calc(50% + var(--S)*.58);top:calc(var(--S)*1.12);animation-delay:.24s}
+
+.ring{width:100%;aspect-ratio:1;border-radius:50%;padding:5px;background:linear-gradient(135deg,var(--c),#fff);box-shadow:var(--sh);transition:transform .25s}
+.ring>*{border-radius:50%;width:100%;height:100%;object-fit:cover;display:block;background:#fff}
+.pf:hover .ring{transform:scale(1.04)}
+
+@keyframes drop{from{transform:translateY(-120%);opacity:0}to{transform:none;opacity:1}}
+@keyframes swing{0%,100%{transform:rotate(2.5deg)}50%{transform:rotate(-2.5deg)}}
+/* modal */
+.modal{position:fixed;inset:0;display:none;place-items:center;background:rgba(220,245,255,.6);backdrop-filter:blur(8px);z-index:20;padding:16px}
+.modal.on{display:grid;animation:fade .25s}
+@keyframes fade{from{opacity:0}}
+.card{width:min(360px,100%);background:var(--glass);border:1px solid #fff;border-radius:32px;box-shadow:var(--sh);padding:26px 22px;text-align:center;backdrop-filter:blur(14px);animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.6);opacity:0}}
+.card .ring{width:120px;margin:0 auto 10px}
+.card h2{margin:0 0 14px;font-size:28px;font-weight:400;color:var(--c)}
+.pw{display:flex;align-items:center;background:#fff;border:2px solid var(--line);border-radius:20px;padding:0 6px 0 16px;transition:border .2s}
+.pw:focus-within{border-color:var(--cy)}
+.pw input{flex:1;min-width:0;border:0;outline:0;font:inherit;font-size:17px;padding:14px 0;background:none}
+.eye{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:var(--c,#1fb9d6);background:rgba(31,185,214,.1);flex:none}.eye svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;animation:pop .3s}
+.err{min-height:22px;color:#e0476b;font-size:14px;margin:8px 0}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-9px)}50%{transform:translateX(9px)}75%{transform:translateX(-5px)}}
+.btn{border-radius:99px;padding:14px 26px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--cy),var(--mint));box-shadow:0 8px 20px rgba(31,185,214,.35)}
+.ghost{background:#fff;color:var(--ink);box-shadow:none;border:1px solid var(--line)}
+.acts{display:flex;gap:10px;justify-content:center}
+/* welcome */
+#s-wel{justify-content:center;gap:12px;padding:20px;text-align:center}
+#s-wel h2{margin:0;font-size:clamp(28px,7vw,44px);font-weight:400;animation:pop .7s both}
+.banner{width:min(420px,84%);aspect-ratio:16/9;border-radius:30px;overflow:hidden;box-shadow:var(--sh);border:4px solid #fff;animation:pop .7s .15s both}
+.banner img{width:100%;height:100%;object-fit:cover;display:block}
+.chatbtn{position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;margin-top:6px;padding:16px 34px;border-radius:999px;font-family:Chewy,cursive;font-size:30px;letter-spacing:2px;color:#145a3f;background:linear-gradient(135deg,#c8ffe6,#98FBCB 55%,#7fe8b4);border:3px solid #fff;box-shadow:0 14px 30px rgba(152,251,203,.75),0 0 0 6px rgba(152,251,203,.3),inset 0 2px 6px rgba(255,255,255,.7);animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 14px 34px rgba(152,251,203,.9),0 0 0 11px rgba(152,251,203,.18),inset 0 2px 6px rgba(255,255,255,.7)}}
+/* chat */
+#s-chat{align-items:stretch;background:linear-gradient(180deg,#f2fbff,#effff9)}
+.hd{display:flex;align-items:center;gap:8px;padding:10px 10px;background:var(--glass);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);z-index:5}
+.ib{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;flex:none;background:#fff;border:1px solid var(--line);box-shadow:0 3px 10px rgba(60,140,170,.15);color:var(--ink);transition:transform .15s,background .2s}
+.ib.bk{width:36px;height:36px}.ib.bk svg{width:18px;height:18px}.gal .hd .t b{font-family:inherit;font-weight:600;font-size:18px}
+.ib svg,.dd b svg,.menu b svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.gt{display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left}
+.sb{display:none;gap:8px;padding:8px 10px;background:var(--glass);border-bottom:1px solid var(--line);align-items:center}.sb.on{display:flex;animation:pop .25s}
+.sb input{flex:1;min-width:0;border:1px solid var(--line);border-radius:22px;padding:10px 16px;font:inherit;outline:0}
+.ibody{flex:1;overflow-y:auto;padding:20px 16px;text-align:center}
+.big{width:min(60vw,200px);aspect-ratio:1;border-radius:50%;overflow:hidden;margin:0 auto 14px;border:5px solid #fff;box-shadow:var(--sh);animation:pop .5s}.big img{width:100%;height:100%;object-fit:cover;display:block}
+.ibody h2{font-family:Chewy,cursive;font-weight:400;font-size:32px;margin:0}.ibody p{white-space:pre-line;color:var(--mut);margin:6px auto 18px;max-width:420px;line-height:1.5}
+.box{background:#fff;border:1px solid var(--line);border-radius:22px;padding:6px;margin:12px auto;max-width:460px;text-align:left}
+.box button,.mem{display:flex;align-items:center;gap:12px;padding:10px;border-radius:16px;width:100%}.box button:hover{background:#eefaff}
+.mem .a{width:44px;height:44px;border-radius:50%;overflow:hidden}.mem .a img{width:100%;height:100%;object-fit:cover}.box .ct{margin-left:auto;color:var(--mut)}
+.ib:hover{background:#eefaff}
+.gav{width:44px;height:44px;border-radius:50%;overflow:hidden;flex:none;border:2px solid #fff;box-shadow:var(--sh)}
+.gav img{width:100%;height:100%;object-fit:cover}
+.hd .t{flex:1;min-width:0}.hd .t b{font-family:Chewy,cursive;font-weight:400;font-size:20px;display:block}.hd .t small{color:var(--mut)}
+#msgs{flex:1;overflow-y:auto;padding:14px 10px 8px;display:flex;flex-direction:column;gap:3px;scroll-behavior:smooth;overscroll-behavior:contain}
+.day{align-self:center;margin:10px 0;font-size:12px;color:var(--mut);background:#fff;padding:3px 12px;border-radius:99px;border:1px solid var(--line)}
+.m{display:flex;gap:7px;max-width:86%;align-items:flex-end}
+.m.me{align-self:flex-end;flex-direction:row-reverse}
+.m.new{animation:msg .35s cubic-bezier(.2,1.3,.4,1)}
+@keyframes msg{from{opacity:0;transform:translateY(12px) scale(.92)}}
+.m .a{width:30px;height:30px;border-radius:50%;overflow:hidden;flex:none;background:#fff}.m .a img{width:100%;height:100%;object-fit:cover}
+.m .sp{width:30px;flex:none}
+.bub{background:#fff;border-radius:20px 20px 20px 6px;padding:7px 12px 5px;box-shadow:0 2px 8px rgba(60,140,170,.12);min-width:0;overflow-wrap:anywhere}
+.me .bub{background:linear-gradient(135deg,#c8f3ff,#c9ffe9);border-radius:20px 20px 6px 20px}
+.bub .n{font-family:Chewy,cursive;font-size:15px;color:var(--c);filter:brightness(.85)}mark{background:#fff3a0;border-radius:4px}
+.bub .tx{white-space:pre-wrap;line-height:1.45}
+.bub time{display:block;text-align:right;font-size:11px;color:var(--mut);margin-top:1px}
+.bub img.f{max-width:100%;width:240px;border-radius:14px;display:block;margin:3px 0;cursor:zoom-in}
+.doc{display:flex;gap:8px;align-items:center;padding:8px;background:rgba(31,185,214,.1);border-radius:12px;margin:3px 0;color:inherit;text-decoration:none}
+.doc i{font-style:normal;font-size:24px}.doc span{min-width:0}.doc small{display:block;color:var(--mut)}
+.na{padding:10px;border-radius:12px;background:#fff4f6;color:#c64a68;font-size:13px;margin:3px 0}
+.empty{margin:auto;text-align:center;color:var(--mut);padding:20px}.empty div{font-size:56px;animation:swing 3s infinite}
+.typ{height:0;overflow:hidden;opacity:0;padding:0 12px;transition:height .25s,opacity .25s;display:flex;align-items:center}
+.typ.on{height:44px;opacity:1}
+#tav{display:flex}#tav>div{width:30px;height:30px;border-radius:50%;overflow:hidden;border:2px solid #fff;margin-right:-8px;background:#fff}#tav img{width:100%;height:100%;object-fit:cover}
+.dots{background:#fff;border-radius:18px 18px 18px 6px;padding:10px 14px 9px;margin-left:14px;box-shadow:0 2px 8px rgba(60,140,170,.12)}.dots i:nth-child(4){animation-delay:.45s;margin:0}
+.dots i{display:inline-block;width:6px;height:6px;margin-right:3px;border-radius:50%;background:var(--cy);animation:bn 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes bn{0%,60%,100%{transform:none;opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+.pre{display:none;gap:8px;overflow-x:auto;padding:6px 10px}.pre.on{display:flex}
+.chip{position:relative;flex:none;width:110px;background:#fff;border-radius:14px;padding:6px;border:1px solid var(--line);font-size:11px;animation:pop .3s}
+.chip img,.chip video{width:100%;height:64px;object-fit:cover;border-radius:9px;display:block}
+.chip .ic{height:64px;display:grid;place-items:center;font-size:28px}
+.chip p{margin:3px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip button{position:absolute;top:-6px;right:-6px;width:26px;height:26px;border-radius:50%;background:#e0476b;color:#fff}
+.comp{display:flex;align-items:flex-end;gap:8px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));position:relative}
+.plus,.send{width:48px;height:48px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:26px;color:#fff;background:linear-gradient(135deg,var(--cy),var(--mint));box-shadow:0 6px 16px rgba(31,185,214,.35);transition:transform .3s}
+.plus.open{transform:rotate(135deg)}
+.send svg{width:22px;height:22px;fill:#fff}.send.go{animation:fly .5s}
+@keyframes fly{40%{transform:translate(8px,-8px) scale(.85)}}
+.comp textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line);outline:0;border-radius:24px;padding:12px 16px;font:inherit;font-size:16px;max-height:120px;background:#fff;line-height:1.35}
+.comp textarea:focus{border-color:var(--cy)}
+.menu{position:absolute;left:10px;bottom:68px;display:none;flex-direction:column;gap:6px;background:var(--glass);backdrop-filter:blur(12px);padding:8px;border-radius:22px;box-shadow:var(--sh);border:1px solid #fff;z-index:6}
+.menu.on{display:flex}
+.menu button{display:flex;gap:10px;align-items:center;padding:10px 16px 10px 10px;border-radius:16px;font-weight:500;opacity:0;animation:up .3s forwards;animation-delay:calc(var(--i)*70ms)}
+.menu button:hover{background:rgba(31,185,214,.12)}
+.menu b{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--g);color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.15)}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.dd{position:absolute;right:10px;top:62px;background:#fff;border-radius:16px;box-shadow:var(--sh);display:none;flex-direction:column;z-index:8;overflow:hidden;border:1px solid var(--line)}
+.dd.on{display:flex;animation:pop .25s}.dd button{display:flex;gap:12px;align-items:center;padding:11px 20px 11px 12px;text-align:left}.dd b{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#eefaff;color:var(--cy);flex:none}.dd small{display:block;color:var(--mut);font-size:12px}.dd button:hover{background:#eefaff}
+.down{position:absolute;right:14px;bottom:86px;width:42px;height:42px;border-radius:50%;background:#fff;box-shadow:var(--sh);display:none;z-index:4}.down.on{display:block}
+/* gallery */
+.gal{position:fixed;inset:0;z-index:15;background:linear-gradient(160deg,#f2fbff,#effff9);display:flex;flex-direction:column;transform:translateY(100%);visibility:hidden;transition:transform .4s cubic-bezier(.2,.9,.3,1),visibility .4s}
+.gal.on{transform:none;visibility:visible}
+.tabs{display:flex;gap:6px;padding:8px 12px}.tabs button{flex:1;padding:10px;border-radius:99px;background:#fff;border:1px solid var(--line);font-weight:600}
+.tabs button.on{background:linear-gradient(135deg,var(--cy),var(--mint));color:#fff;border:0}
+.grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;padding:8px 12px;align-content:start}
+.grid>*{aspect-ratio:1;border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--line);position:relative;animation:pop .3s}
+.grid img,.grid video{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.grid .d{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;text-align:center;font-size:12px;text-decoration:none;color:inherit;word-break:break-all}
+.lb{position:fixed;inset:0;z-index:30;background:rgba(15,40,55,.85);display:none;place-items:center;padding:14px}.lb.on{display:grid;animation:fade .25s}
+.lb img,.lb video{max-width:100%;max-height:88vh;border-radius:16px}
+#lbx{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.3);z-index:2}#lbx svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-90px);background:#fff;border-radius:99px;padding:10px 20px;box-shadow:var(--sh);z-index:50;transition:transform .35s cubic-bezier(.2,1.3,.4,1);max-width:92%;text-align:center;border:2px solid var(--mint)}
+.toast.on{transform:translate(-50%,0)}.toast.bad{border-color:#e0476b}
+@media(min-width:700px){#s-chat{max-width:760px;margin:0 auto;left:0;right:0;box-shadow:var(--sh)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+.swb{display:flex;align-items:center;gap:8px;padding:5px 14px 5px 8px;border-radius:99px;font-size:13px;font-weight:600;border:2px solid transparent;background:linear-gradient(#fff,#fff) padding-box,linear-gradient(135deg,var(--cy),var(--mint),#8e9bff) border-box;box-shadow:0 4px 12px rgba(60,140,170,.18)}
+.stk{display:flex}.stk div{width:24px;height:24px;border-radius:50%;overflow:hidden;border:2px solid var(--c);margin-left:-8px;background:#fff}.stk div:first-child{margin-left:0}.stk img,.stk .ph{width:100%;height:100%;object-fit:cover;display:block;font-size:11px;padding:0}
+.vw{position:relative;width:240px;max-width:100%;border-radius:14px;overflow:hidden;background:#0d2a38;margin:3px 0}.vw video{width:100%;display:block;max-height:60vh;background:#0d2a38}
+.vw .pc{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(255,255,255,.88);color:var(--cy);display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.3)}.vw.pl .pc{display:none}
+.pbar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:4px;padding:16px 8px 6px;background:linear-gradient(transparent,rgba(10,30,45,.72));color:#fff;font-size:11px}
+.pbar button{width:30px;height:30px;display:grid;place-items:center;flex:none;border-radius:50%;color:#fff}.pbar button.sp{width:auto;padding:0 9px;border-radius:99px;background:rgba(255,255,255,.22);font-weight:600}
+.pbar input,.vr{flex:1;min-width:0;accent-color:var(--cy);height:4px}.pbar .tm{flex:none;font-variant-numeric:tabular-nums}
+.vw.big{width:min(96vw,900px)}.vw.big video{max-height:80vh}.vw.big .pbar{padding:24px 12px 12px;font-size:13px}.vw.big .pbar button{width:38px;height:38px}
+.vp{display:flex;align-items:center;gap:8px;width:250px;max-width:100%;padding:2px 0}
+.vb{width:40px;height:40px;border-radius:50%;flex:none;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--cy),var(--mint));box-shadow:0 4px 10px rgba(31,185,214,.35)}
+.vm{flex:1;min-width:0}.vt{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mut)}.vsp{display:flex;gap:2px;align-items:center}.vsp button{width:26px;height:26px;display:grid;place-items:center;color:var(--ink)}.vsp button.sp{width:auto;padding:0 7px;border-radius:99px;background:rgba(31,185,214,.15);font-weight:600;font-size:11px}
+.vp svg,.vw svg,.recbar svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.vsp svg{width:18px;height:18px}
+.send .mi{display:none;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round}.send.mic .mi{display:block}.send.mic .pl{display:none}.send.mic{background:linear-gradient(135deg,#ff7eb3,#ff9a56);box-shadow:0 6px 16px rgba(255,126,179,.4)}
+.recbar{display:none;flex:1;min-width:0;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:28px;padding:4px 4px 4px 6px;animation:pop .25s}
+.comp.recording .recbar{display:flex}.comp.recording>:not(.recbar){display:none}
+.rdot{width:10px;height:10px;border-radius:50%;background:#e0476b;animation:bn 1s infinite;flex:none}#rt{font-variant-numeric:tabular-nums;font-weight:600;min-width:38px}
+.wave{flex:1;display:flex;align-items:center;gap:3px;height:28px;overflow:hidden}.wave i{flex:1;max-width:4px;height:100%;border-radius:3px;background:linear-gradient(var(--cy),var(--mint));animation:wv 1s ease-in-out infinite}
+.recbar.p .wave i,.recbar.p .rdot{animation-play-state:paused}@keyframes wv{0%,100%{transform:scaleY(.2)}50%{transform:scaleY(1)}}
+.rb{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;flex:none}.rb.del{color:#e0476b;background:#fff0f3}.rb.pz{color:var(--cy);background:#eefaff}
+.menu.r{left:auto;right:10px}
+.chatbtn svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.chatbtn::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent);transform:skewX(-20deg);animation:shine 3s infinite}
+@keyframes shine{0%{left:-60%}40%,100%{left:130%}}
+.plus{background:#98FBCB;color:#145a3f;box-shadow:0 6px 16px rgba(152,251,203,.8)}
+.wav{width:min(34vw,140px)}#wtxt{min-height:1.2em;filter:brightness(.8)}
+.caret::after{content:'|';margin-left:2px;animation:bl .8s steps(1) infinite}@keyframes bl{50%{opacity:0}}
+@keyframes spinin{from{transform:rotate(-540deg) scale(.1);opacity:0}to{transform:none;opacity:1}}
+.btn.sm{padding:9px 18px;font-size:14px;box-shadow:none}
+.pbk,.pgo{display:flex;align-items:center;gap:6px;height:46px;border-radius:99px;font-weight:600}
+.pbk{padding:0 18px 0 10px;background:#fff;border:1px solid var(--line);box-shadow:0 3px 10px rgba(60,140,170,.15);color:var(--ink)}
+.pgo{flex:1;max-width:190px;justify-content:center;gap:8px;font-size:16px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--c,#1fb9d6),var(--mint));box-shadow:0 8px 18px rgba(31,185,214,.35)}
+.pbk svg,.pgo svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.pgo:hover svg{transform:translateX(3px)}.pbk:hover svg{transform:translateX(-3px)}
+.act{align-self:flex-start;margin:2px 0 4px 37px;max-width:96%;background:var(--glass);backdrop-filter:blur(12px);border:1px solid #fff;border-radius:26px;box-shadow:var(--sh);padding:8px;animation:pop .25s}.act.me{align-self:flex-end;margin:2px 0 4px}
+.emr{display:flex;gap:2px;align-items:center;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.em1{width:40px;height:40px;border-radius:50%;font-size:24px;display:grid;place-items:center;opacity:0;animation:up .3s forwards;animation-delay:calc(var(--i)*45ms);transition:transform .15s,background .2s}
+.em1:active{transform:scale(1.3)}.em1.sel{background:rgba(31,185,214,.18)}.em1.pl2{background:#eefaff;color:var(--cy)}
+.em1 svg,.acr svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.acr{display:flex;justify-content:space-around;gap:6px;padding-top:6px}.acr button{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--mut);min-width:56px}
+.acr b{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#eefaff;color:var(--cy)}.a-del b{background:#fff0f3;color:#e0476b}.a-ed b{background:#eef0ff;color:#6a5cff}.a-cp b{background:#e8fff4;color:#2fc79a}
+.rx{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}.rx:empty{display:none}
+.rc{background:#fff;border:1px solid var(--line);border-radius:99px;padding:1px 8px;font-size:14px;box-shadow:0 1px 4px rgba(60,140,170,.15)}.rc.mine{background:#dff6ff;border-color:var(--cy)}
+#msgs{touch-action:manipulation}#msgs .bub{-webkit-user-select:none;user-select:none}
+.eb{display:none;align-items:center;justify-content:space-between;padding:4px 14px;background:#eefaff;color:var(--cy);font-weight:600;border-top:1px solid var(--line)}.eb.on{display:flex}.eb .ib{width:30px;height:30px}
+.acts.col{flex-direction:column}.dbtn{height:46px;border-radius:99px;font-weight:600;background:#fff;border:1px solid var(--line)}.dbtn.red{background:#e0476b;color:#fff;border:0}
+.emo{position:fixed;inset:0;z-index:25;display:none;align-items:flex-end;background:rgba(220,245,255,.5);backdrop-filter:blur(4px)}.emo.on{display:flex;animation:fade .2s}
+.sheet{width:100%;max-width:760px;margin:0 auto;height:56vh;background:#fff;border-radius:26px 26px 0 0;box-shadow:0 -10px 30px rgba(60,140,170,.2);display:flex;flex-direction:column;animation:sl .3s}@keyframes sl{from{transform:translateY(100%)}}
+.etabs{display:flex;gap:4px;padding:10px 10px 6px;overflow-x:auto;border-bottom:1px solid var(--line)}.etabs button{width:42px;height:42px;flex:none;border-radius:50%;font-size:22px}.etabs button.on{background:#dff6ff}
+.egrid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:2px;padding:8px 10px calc(10px + env(safe-area-inset-bottom));align-content:start}.egrid button{height:44px;font-size:26px;border-radius:12px}.egrid button:active{background:#dff6ff;transform:scale(1.2)}
+</style>
+</head>
+<body>
+
+<!-- 1. তিন বন্ধুর প্রোফাইল -->
+<section class="screen on" id="s-pick">
+  <h1 class="chewy">Dynamic Typing...</h1>
+  <p class="sub">তোমার ছবিতে ট্যাপ করো</p>
+  <div class="row" id="row"></div>
+</section>
+
+<!-- পাসওয়ার্ড কার্ড -->
+<div class="modal" id="pwm"><div class="card" id="card">
+  <div class="ring" id="cav"></div>
+  <h2 class="chewy" id="cname"></h2>
+  <div class="pw"><input id="pwi" type="password" placeholder="Password" autocomplete="off" autocapitalize="off"><button class="eye press" id="eye" aria-label="Show or hide password"></button></div>
+  <div class="err" id="err"></div>
+  <div class="acts"><button class="pbk press" id="pback"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>Back</button><button class="pgo press" id="plogin">Enter<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+</div></div>
+
+<!-- 2. Welcome -->
+<section class="screen" id="s-wel">
+  <div class="ring wav" id="wav"></div>
+  <h2 class="chewy" id="wtxt"></h2>
+  <div class="banner" id="ban"></div>
+  <button class="chatbtn press" id="chatbtn"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>CHAT<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  <button class="swb press" id="wback"><span class="stk" id="stk"></span>Switch profile</button>
+</section>
+
+<!-- 3. গ্রুপ চ্যাট -->
+<section class="screen" id="s-chat">
+  <div class="hd">
+    <button class="ib bk press" id="cback" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="gt press" id="ginfo" aria-label="Group info"><span class="gav" id="gav"></span><span class="t"><b>Dynamic Typing...</b><small>3 friends • Together in one chat</small></span></button>
+    <button class="ib press" id="gbtn" aria-label="Media"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="4"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></button>
+    <button class="ib press" id="mbtn" aria-label="Menu"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.8" fill="currentColor" stroke="none"/></svg></button>
+  </div>
+  <div class="sb" id="sb"><input id="sq" placeholder="Search messages..."><button class="ib press" id="sx" aria-label="Close search"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="dd" id="dd">
+    <button data-a="search"><b><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></b><span>Search<small>মেসেজ খুঁজে দেখো</small></span></button>
+    <button data-a="info"><b><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></b><span>Group info<small>নাম, সদস্য ও মিডিয়া</small></span></button>
+    <button data-a="clear"><b style="color:#e0476b;background:#fff0f3"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></b><span>Clear chat<small>সব মেসেজ মুছে ফেলো</small></span></button>
+  </div>
+  <div id="msgs"></div>
+  <button class="down press" id="down" aria-label="Latest">⬇</button>
+  <div class="typ" id="typ"><div id="tav"></div><span class="dots"><i></i><i></i><i></i><i></i></span></div>
+  <div class="eb" id="eb"><span>Editing message</span><button class="ib press" id="ebx" aria-label="Cancel edit"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="pre" id="pre"></div>
+  <div class="comp" id="comp">
+    <div class="menu" id="menu">
+      <button style="--i:3;--g:linear-gradient(135deg,#ff9ab8,#ff6b9d)" data-k="img"><b><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="4"/><circle cx="9" cy="10" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></b>Photo</button>
+      <button style="--i:2;--g:linear-gradient(135deg,#a99bff,#6a5cff)" data-k="vid"><b><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10l5-3v10l-5-3"/></svg></b>Video</button>
+      <button style="--i:1;--g:linear-gradient(135deg,#6cc0ff,#2f7bff)" data-k="doc"><b><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></b>Document</button>
+      <button style="--i:0;--g:linear-gradient(135deg,#43e3c2,#1fb9d6)" data-k="cam"><b><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13.5" r="3.5"/></svg></b>Camera</button>
+    </div>
+    <button class="plus press" id="plus" aria-label="Attach">+</button>
+    <textarea id="inp" rows="1" placeholder="Message your friends..."></textarea>
+    <button class="send press mic" id="send" aria-label="Send"><svg class="mi" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><svg class="pl" viewBox="0 0 24 24"><path d="M2.5 11.2 20.8 3.3c.9-.4 1.7.5 1.4 1.4l-7.9 18.3c-.4.9-1.7.9-2 0l-2.3-6.7-6.7-2.3c-1-.3-1-1.6.2-2z"/></svg></button>
+    <div class="recbar" id="recbar"><button class="rb del press" id="rdel" aria-label="Delete"></button><i class="rdot"></i><span id="rt">0:00</span><div class="wave" id="wave"></div><button class="rb pz press" id="rpz" aria-label="Pause"></button><button class="send press" id="rsend" aria-label="Send voice"></button></div>
+    <div class="menu r" id="vmenu">
+      <button style="--i:1;--g:linear-gradient(135deg,#ff7eb3,#ff9a56)" data-a="rec"><b><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></b>Record voice</button>
+      <button style="--i:0;--g:linear-gradient(135deg,#a99bff,#6a5cff)" data-a="file"><b><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></b>Audio file</button>
+    </div>
+    <input type="file" id="f-aud" accept="audio/*" multiple hidden>
+    <input type="file" id="f-img" accept="image/*" multiple hidden>
+    <input type="file" id="f-vid" accept="video/*" multiple hidden>
+    <input type="file" id="f-doc" multiple hidden>
+    <input type="file" id="f-cam" accept="image/*" capture="environment" hidden>
+  </div>
+</section>
+
+<!-- গ্যালারি -->
+<div class="gal" id="gal">
+  <div class="hd"><button class="ib bk press" id="gclose" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="t"><b>Shared media</b></div></div>
+  <div class="tabs" id="tabs"><button class="on" data-t="img">Photos</button><button data-t="vid">Videos</button><button data-t="doc">Documents</button></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div class="gal" id="info">
+  <div class="hd"><button class="ib bk press" id="iclose" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><div class="t"><b>Group info</b></div></div>
+  <div class="ibody" id="ibody"></div>
+</div>
+<div class="emo" id="emo"><div class="sheet"><div class="etabs" id="etabs"></div><div class="egrid" id="egrid"></div></div></div>
+<div class="modal" id="dlg"><div class="card"><h2 id="dt" style="margin:0 0 6px;color:var(--ink);font-size:22px;font-weight:600"></h2><p id="dp" style="color:var(--mut);margin:0 0 14px"></p><div class="acts col" id="db"></div></div></div>
+<!-- বড় প্রিভিউ ও নিশ্চিতকরণ -->
+<div class="lb" id="lb"><button id="lbx" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div id="lbc"></div></div>
+<div class="modal" id="cfm"><div class="card"><h2 style="color:var(--ink);margin:0 0 8px">Clear chat?</h2><p>সব মেসেজ এই ডিভাইস থেকে মুছে যাবে।</p><div class="acts"><button class="btn ghost press" id="cno">Cancel</button><button class="btn press" id="cyes" style="background:#e0476b">Clear</button></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+/* ============================================================================
+   Firebase (Cloud Firestore) — একই index.html-এ, অফিসিয়াল CDN ES module; কোনো build লাগে না।
+
+   Firestore → Rules → নিচেরটা Publish করতে হবে (Production mode-এ Rules ছাড়া সব রিকোয়েস্ট বন্ধ থাকে):
+
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       function ok() { return request.auth != null; }
+       function who(u) { return u in ['NADIM', 'APON', 'MAHODI']; }
+       match /groups/main/messages/{id} {
+         allow read: if ok();
+         allow create: if ok()
+           && request.resource.data.keys().hasOnly(['u', 'text', 't', 'files', 'v'])
+           && who(request.resource.data.u)
+           && request.resource.data.text is string
+           && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 4000
+           && request.resource.data.t == request.time
+           && request.resource.data.files.size() == 0;
+         allow update: if ok()
+           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'edited', 'r', 'hid'])
+           && request.resource.data.text is string && request.resource.data.text.size() <= 4000;
+         allow delete: if ok();
+       }
+       match /groups/main/typing/{u} {
+         allow read: if ok();
+         allow write: if ok() && who(u)
+           && request.resource.data.keys().hasOnly(['on', 'at'])
+           && request.resource.data.on is bool
+           && request.resource.data.at == request.time;
+       }
+       match /{document=**} { allow read, write: if false; }
+     }
+   }
+
+   সীমাবদ্ধতা: এখানের পাসওয়ার্ড শুধু UI-র দরজা, আসল নিরাপত্তা নয়। Rules বলতে পারে "সাইন-ইন করা কেউ",
+   কিন্তু NADIM/APON/MAHODI কে—তা বলতে পারে না। (ব্যাখ্যা উত্তরের সঙ্গে দেওয়া আছে)
+   ============================================================================ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAfOuZDIEESSgAB3gAq7qhgK6DxqNEmYLY",
+  authDomain: "dynamic-typing.firebaseapp.com",
+  projectId: "dynamic-typing",
+  storageBucket: "dynamic-typing.firebasestorage.app",
+  messagingSenderId: "307757637981",
+  appId: "1:307757637981:web:a2c2c4514077df0dc2c8b4"
+};
+const FB_VER = '13.1.0';
+/* Anonymous Authentication (বিনামূল্যে; লগইন/প্রোফাইল স্ক্রিন বদলায় না, ব্যবহারকারীকে কিছু দেখায় না)।
+   Rules-এ request.auth দরকার—নইলে ডেটাবেস সবার জন্য খুলে দিতে হতো। false করলে Rules-এর সঙ্গে মিলবে না। */
+const USE_ANON_AUTH = true;
+let F = null, A = null, db = null, auth = null, msgCol = null, typCol = null, authP = null;
+
+/* SDK একবারই লোড ও initialize হয়; ব্যর্থ হলে UI চালু থাকে, চ্যাটে এরর দেখায় */
+const fbReady = (async () => {
+  try {
+    const base = 'https://www.gstatic.com/firebasejs/' + FB_VER + '/';
+    const mods = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js'), USE_ANON_AUTH ? import(base + 'firebase-auth.js') : null]);
+    const app = mods[0].getApps().length ? mods[0].getApp() : mods[0].initializeApp(firebaseConfig);
+    F = mods[1]; A = mods[2]; db = F.getFirestore(app);
+    if (USE_ANON_AUTH) auth = A.getAuth(app);
+    msgCol = F.collection(db, 'groups', 'main', 'messages');
+    typCol = F.collection(db, 'groups', 'main', 'typing');
+    return true;
+  } catch (e) { console.error('Firebase লোড হয়নি', e); return false; }
+})();
+function ensureAuth() {
+  if (!USE_ANON_AUTH) return Promise.resolve();
+  return authP || (authP = (async () => { await auth.authStateReady(); if (!auth.currentUser) await A.signInAnonymously(auth); })().catch(e => { authP = null; throw e; }));
+}
+const errMsg = e => {
+  const c = String((e && e.code) || '');
+  return c === 'sdk' ? 'Firebase লোড হয়নি — ইন্টারনেট দেখো'
+    : c.includes('permission-denied') ? 'অনুমতি নেই — Firestore Rules Publish করা আছে কিনা দেখো'
+    : c.includes('operation-not-allowed') || c.includes('admin-restricted') ? 'Anonymous sign-in চালু নেই (Firebase Console → Authentication)'
+    : c.includes('unavailable') || c.includes('network') ? 'সার্ভারে সংযোগ হচ্ছে না — ইন্টারনেট দেখো'
+    : 'কিছু একটা ভুল হয়েছে — আবার চেষ্টা করো';
+};
+const mediaOff = () => toast('মিডিয়া আপলোড এখন বন্ধ (Firebase Storage চালু নেই) — আপাতত শুধু টেক্সট চলবে', true);
+
+/* ===== CONFIG: ছবি repository-র elements ফোল্ডার থেকে আসে ===== */
+const CFG = {
+  people: {
+    NADIM:  {img:'./elements/nadim.png', pass:'nadimm',  color:'#1fb9d6'},
+    APON:   {img:'./elements/apon.png', pass:'apon123',   color:'#2fc79a'},
+    MAHODI: {img:'./elements/mahodi.png', pass:'mahodi999', color:'#7b88f5'}
+  },
+  banner: './elements/group%20banner.png',
+  group: 'Dynamic Typing...',
+  logo: './elements/group%20logo.png',
+  desc: 'Different “3 Thoughts” Starts Here… 😌 • To Keep The GROUP Sharp - Be Alive !…🫠\nআপাতত… একটু বেঁচে থাকি সবাই !…😌'
+};
+// ছবি এখন repository-র ./elements/ থেকে (relative path—GitHub Pages-এর সাবপাথেও চলে)
+const imgUrl = v => v;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const NAMES = Object.keys(CFG.people);
+const IC = {
+  play: '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>',
+  pause: '<svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14" stroke-width="3.4"/></svg>',
+  b10: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/><text x="12" y="15.3" font-size="7" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text></svg>',
+  f10: '<svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/><text x="12" y="15.3" font-size="7" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">10</text></svg>',
+  exp: '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+  eye: '<svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeoff: '<svg viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.5 6.6A17 17 0 0 0 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.8-1.2M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>'
+};
+const fmtS = s => { s = Math.floor(s || 0); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+let stick = false, editId = null, me = null, pending = [], galTab = 'img', typTimer;
+
+/* ভাঙা ছবির বদলে প্লেসহোল্ডার */
+function pic(src, label, color, cls) {
+  return '<img src="' + imgUrl(src) + '" alt="' + esc(label) + '" data-l="' + esc(label) + '" data-c="' + (color || '') + '"' + (cls ? ' class="' + cls + '"' : '') + ' loading="lazy">';
+}
+document.addEventListener('error', e => {
+  const t = e.target; if (t.tagName !== 'IMG' || !t.dataset.l) return;
+  const d = document.createElement('div'); d.className = 'ph'; d.style.setProperty('--c', t.dataset.c || '#1fb9d6');
+  d.textContent = t.dataset.l.length > 3 && t.dataset.l.includes(' ') ? t.dataset.l : t.dataset.l.slice(0, t.closest('.banner') ? 40 : 1);
+  if (t.closest('.banner')) d.style.fontSize = '28px';
+  t.replaceWith(d);
+}, true);
+const avatar = n => pic(CFG.people[n].img, n, CFG.people[n].color);
+
+$('stk').innerHTML = NAMES.map(n => '<div style="--c:' + CFG.people[n].color + '">' + avatar(n) + '</div>').join('');
+/* টাইপিং অ্যানিমেশন */
+function typeIn(el, text) {
+  clearInterval(typeIn.t); clearTimeout(typeIn.d); el.textContent = ''; el.classList.add('caret'); const a = Array.from(text); let i = 0;
+  typeIn.d = setTimeout(() => { typeIn.t = setInterval(() => { el.textContent = a.slice(0, ++i).join(''); if (i >= a.length) { clearInterval(typeIn.t); setTimeout(() => el.classList.remove('caret'), 1500); } }, 90); }, 450);
+}
+/* ===== Toast ===== */
+function toast(t, bad) { const e = $('toast'); e.textContent = t; e.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(toast.t); toast.t = setTimeout(() => e.className = 'toast', 2400); }
+
+/* ===== স্ক্রিন বদল ===== */
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); if (id === 's-chat') { renderAll(); stickBottom(); } }
+
+/* ===== প্রোফাইল স্ক্রিন ===== */
+$('row').innerHTML = NAMES.map(n => '<button class="pf" style="--c:' + CFG.people[n].color + '" data-n="' + n + '" aria-label="' + n + '"><div class="ring">' + avatar(n) + '</div></button>').join('');
+$('row').addEventListener('click', e => { const b = e.target.closest('.pf'); if (b) openCard(b.dataset.n); });
+
+let sel = null;
+function openCard(n) {
+  sel = n; const c = CFG.people[n];
+  $('card').style.setProperty('--c', c.color); $('cav').innerHTML = avatar(n); $('cname').textContent = n;
+  $('pwi').value = ''; $('pwi').type = 'password'; $('eye').innerHTML = IC.eye; $('err').textContent = '';
+  $('pwm').classList.add('on'); setTimeout(() => $('pwi').focus(), 300);
+}
+function login() {
+  const v = $('pwi').value.trim().toLowerCase();
+  if (v === CFG.people[sel].pass.toLowerCase()) {
+    me = sel; $('pwm').classList.remove('on');
+    $('wtxt').style.color = CFG.people[me].color; $('wav').style.setProperty('--c', CFG.people[me].color); $('wav').innerHTML = avatar(me); typeIn($('wtxt'), 'Welcome, ' + me + '!');
+    $('ban').innerHTML = pic(CFG.banner, CFG.group, '#37d9ae'); $('gav').innerHTML = pic(CFG.logo, 'D', '#37d9ae');
+    Backend.start(); show('s-wel'); toast('লগইন সফল ✓');
+  } else {
+    $('err').textContent = 'ভুল পাসওয়ার্ড। আবার চেষ্টা করো।'; $('card').classList.remove('shake'); void $('card').offsetWidth; $('card').classList.add('shake');
+    toast('Wrong password', true);
+  }
+}
+$('plogin').onclick = login; $('pwi').onkeydown = e => { if (e.key === 'Enter') login(); };
+$('pback').onclick = () => $('pwm').classList.remove('on');
+$('eye').onclick = () => { const p = $('pwi'); const h = p.type === 'password'; p.type = h ? 'text' : 'password'; $('eye').innerHTML = h ? IC.eyeoff : IC.eye; };
+$('wback').onclick = () => { me = null; show('s-pick'); };
+$('chatbtn').onclick = () => show('s-chat');
+$('cback').onclick = () => { stopRec(false); cancelEdit(); closeAct(); show('s-wel'); };
+
+/* ===== স্টোরেজ লেয়ার: Cloud Firestore =====
+   groups/main/messages/{autoId} : {u, text, t(serverTimestamp), files:[], v:1, edited?, r?{NAME:emoji}, hid?[NAME]}
+   groups/main/typing/{NAME}     : {on, at(serverTimestamp)}
+   লাইভ listener শুধু সর্বশেষ PAGE টি মেসেজ শোনে; পুরোনো মেসেজ "আগের মেসেজ দেখো" চাপলে getDocs দিয়ে আসে।
+   (পুরোনো পেজের মেসেজ লাইভ নয়—নিজের এডিট/রিঅ্যাকশন/ডিলিট তাৎক্ষণিক স্ক্রিনে প্রয়োগ হয়) */
+const PAGE = 60, TYP_GAP = 2500;
+const toMsg = d => {
+  const x = d.data({serverTimestamps: 'estimate'});
+  if (!x || !CFG.people[x.u]) return null;
+  return {id: d.id, u: x.u, text: typeof x.text === 'string' ? x.text : '', t: x.t ? x.t.toMillis() : Date.now(), files: Array.isArray(x.files) ? x.files : [],
+    edited: !!x.edited, r: x.r && typeof x.r === 'object' ? {...x.r} : {}, hid: Array.isArray(x.hid) ? [...x.hid] : [], pending: d.metadata.hasPendingWrites};
+};
+const tOf = d => { const x = d.data({serverTimestamps: 'estimate'}); return x && x.t ? x.t.toMillis() : Date.now(); };
+const clrKey = () => 'dyn-typing-cleared-v1-' + me;   // "Clear chat" শুধু এই ডিভাইসে (আগের মতোই)
+const Backend = {
+  msgs: [], map: new Map(), status: 'idle', err: '', started: false, live: false, typLive: false, cursor: null, hasMore: false, loadingOlder: false, lt: 0,
+  async ensure() { if (!(await fbReady)) throw {code: 'sdk'}; await ensureAuth(); },
+  rebuild() { this.msgs = [...this.map.values()].sort((a, b) => a.t - b.t || (a.id < b.id ? -1 : 1)); },
+  changed(newId, jump) {
+    if (!chatOn()) return;
+    const b = $('msgs'), near = jump || stick || b.scrollHeight - b.scrollTop - b.clientHeight < 220, mm = newId && byId(newId);
+    renderAll(newId);
+    if (near || (mm && mm.u === me)) stickBottom(1200);
+  },
+  /* একবারই listener চালু হয় (started গার্ড); ব্যর্থ হলে retry করা যায় */
+  async start() {
+    if (this.started) return;
+    this.started = true; this.status = 'loading'; this.err = ''; this.changed();
+    try { await this.ensure(); } catch (e) { return this.fail(e); }
+    this.unsubM = F.onSnapshot(F.query(msgCol, F.orderBy('t', 'desc'), F.limit(PAGE)), {includeMetadataChanges: true}, s => this.onMsgs(s), e => this.fail(e));
+    this.unsubT = F.onSnapshot(typCol, s => this.onTyp(s), e => console.error('typing', e));
+  },
+  fail(e) {
+    console.error('Firebase error', e);
+    if (this.unsubM) this.unsubM(); if (this.unsubT) this.unsubT();
+    this.unsubM = this.unsubT = null; this.started = this.live = this.typLive = false;
+    this.err = errMsg(e); this.status = 'error'; toast(this.err, true); this.changed();
+  },
+  onMsgs(snap) {
+    const fresh = !this.live && !snap.metadata.fromCache, wasLive = this.live; let newId = null;
+    if (fresh) { this.live = true; this.status = 'live'; this.cursor = snap.docs[snap.docs.length - 1] || null; this.hasMore = snap.size >= PAGE; }
+    const oldest = snap.docs.length ? tOf(snap.docs[snap.docs.length - 1]) : 0;
+    snap.docChanges({includeMetadataChanges: true}).forEach(ch => {
+      const d = ch.doc;
+      if (ch.type === 'removed') { if (snap.size < PAGE || tOf(d) >= oldest) this.map.delete(d.id); return; }   // লিমিটের বাইরে সরে যাওয়া মেসেজ রাখা হয়
+      const m = toMsg(d); if (!m) return;
+      this.map.set(d.id, m);
+      if (ch.type === 'added' && wasLive) { newId = m.id; remoteTyping(m.u, false); }
+    });
+    this.rebuild(); this.changed(newId, fresh);
+  },
+  onTyp(snap) {
+    const first = !this.typLive; this.typLive = true; if (first) return;   // প্রথম স্ন্যাপশটের পুরোনো ডক টাইপিং ধরা হয় না
+    snap.docChanges().forEach(ch => { const n = ch.doc.id; if (ch.type === 'removed' || n === me || ch.doc.metadata.hasPendingWrites) return; remoteTyping(n, !!ch.doc.data().on); });
+  },
+  async add(text) { await this.ensure(); return F.addDoc(msgCol, {u: me, text, t: F.serverTimestamp(), files: [], v: 1}); },
+  patch(id, fn) { const m = this.map.get(id); if (!m) return null; const old = {...m, r: {...m.r}, hid: [...m.hid]}; fn(m); this.rebuild(); this.changed(); return old; },
+  async write(id, fn, data) {
+    await this.ensure(); const old = this.patch(id, fn);
+    try { await F.updateDoc(F.doc(msgCol, id), data()); } catch (e) { if (old) { this.map.set(id, old); this.rebuild(); this.changed(); } throw e; }
+  },
+  edit(id, text) { return this.write(id, m => { m.text = text; m.edited = true; }, () => ({text, edited: true})); },
+  react(id, em) {
+    const m = this.map.get(id), same = !!m && m.r[me] === em;
+    return this.write(id, x => { if (same) delete x.r[me]; else x.r[me] = em; }, () => ({['r.' + me]: same ? F.deleteField() : em}));
+  },
+  hide(id) { return this.write(id, m => { if (!m.hid.includes(me)) m.hid.push(me); }, () => ({hid: F.arrayUnion(me)})); },
+  async remove(id) {
+    await this.ensure(); const m = this.map.get(id); this.map.delete(id); this.rebuild(); this.changed();
+    try { await F.deleteDoc(F.doc(msgCol, id)); } catch (e) { if (m) { this.map.set(id, m); this.rebuild(); this.changed(); } throw e; }
+  },
+  async loadOlder() {
+    if (this.loadingOlder || !this.hasMore || !this.cursor) return;
+    this.loadingOlder = true; this.changed();
+    try {
+      const s = await F.getDocs(F.query(msgCol, F.orderBy('t', 'desc'), F.startAfter(this.cursor), F.limit(PAGE)));
+      s.docs.forEach(d => { const m = toMsg(d); if (m && !this.map.has(d.id)) this.map.set(d.id, m); });
+      if (s.docs.length) this.cursor = s.docs[s.docs.length - 1];
+      this.hasMore = s.docs.length >= PAGE; this.rebuild();
+    } catch (e) { console.error(e); toast(errMsg(e), true); }
+    this.loadingOlder = false; this.changed();
+  },
+  clear() { try { localStorage.setItem(clrKey(), String(Math.max(Date.now(), ...this.msgs.map(m => m.t)))); } catch (e) {} },
+  setTyping(name, on) {
+    if (!name || !this.live) return;
+    const n = Date.now();
+    if (on) { if (n - this.lt < TYP_GAP) return; this.lt = n; } else { if (!this.lt) return; this.lt = 0; }
+    F.setDoc(F.doc(typCol, name), {on, at: F.serverTimestamp()}).catch(() => {});
+  }
+};
+window.addEventListener('offline', () => toast('ইন্টারনেট নেই — অনলাইনে এলে মেসেজ যাবে', true));
+window.addEventListener('online', () => toast('আবার অনলাইনে ✓'));
+
+/* ===== মেসেজ রেন্ডার ===== */
+const fmtT = t => new Date(t).toLocaleTimeString('en', {hour: 'numeric', minute: '2-digit'});
+const fmtD = t => { const d = new Date(t), n = new Date(), y = new Date(Date.now() - 864e5); const s = x => x.toDateString(); return s(d) === s(n) ? 'Today' : s(d) === s(y) ? 'Yesterday' : d.toLocaleDateString('en', {day: 'numeric', month: 'long', year: 'numeric'}); };
+const size = b => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+const kind = f => f.type.startsWith('audio/') ? 'aud' : f.type.startsWith('image/') ? 'img' : f.type.startsWith('video/') ? 'vid' : 'doc';
+
+function fileHtml(f) {
+  if (!f.url) return '<div class="na">⚠ ফাইলটি এখন পাওয়া যাচ্ছে না: ' + esc(f.name) + '</div>';
+  const k = kind(f);
+  if (k === 'img') return '<img class="f" src="' + f.url + '" alt="' + esc(f.name) + '" data-open data-k="img" decoding="async">';
+  if (k === 'vid') return '<div class="vph" data-src="' + f.url + '"></div>';
+  if (k === 'aud') return '<div class="vp" data-dur="' + (f.dur || 0) + '"><audio src="' + f.url + '" preload="metadata"></audio><button class="vb pp" data-v="play" aria-label="Play">' + IC.play + '</button><div class="vm"><input class="vr" type="range" min="0" max="1000" value="0" aria-label="Seek"><div class="vt"><span class="vc">' + fmtS(f.dur) + '</span><span class="vsp"><button data-v="back" aria-label="Back 10s">' + IC.b10 + '</button><button data-v="fwd" aria-label="Forward 10s">' + IC.f10 + '</button><button class="sp" data-v="spd">1×</button></span></div></div></div>';
+  return '<a class="doc" href="' + f.url + '" download="' + esc(f.name) + '" target="_blank"><i>📄</i><span>' + esc(f.name) + '<small>' + size(f.size) + '</small></span></a>';
+}
+let query = '';
+function hl(t) { const s = esc(t); if (!query) return s; const q = esc(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); return s.replace(new RegExp(q, 'gi'), x => '<mark>' + x + '</mark>'); }
+function renderAll(newId) {
+  const box = $('msgs'); let ms = vis();
+  if (query) ms = ms.filter(m => (m.text || '').toLowerCase().includes(query) || (m.files || []).some(f => f.name.toLowerCase().includes(query)));
+  if (!ms.length) { const st = Backend.status, none = !Backend.msgs.length;
+    box.innerHTML = !query && none && st === 'error' ? '<div class="empty"><div>⚠️</div><p>' + esc(Backend.err) + '</p><button class="btn ghost retry press">আবার চেষ্টা করো</button></div>'
+      : !query && none && st !== 'live' ? '<div class="empty"><div>⏳</div><p>মেসেজ লোড হচ্ছে…</p></div>'
+      : '<div class="empty"><div>' + (query ? '🔍' : '💬') + '</div><p>' + (query ? 'কিছু পাওয়া যায়নি।' : 'এখনো কোনো মেসেজ নেই।<br>প্রথম মেসেজটা তুমিই পাঠাও!') + '</p></div>'; return; }
+  let h = '', lastD = '', prev = null;
+  if (!query && Backend.hasMore) h = '<button class="btn ghost older press" style="align-self:center"' + (Backend.loadingOlder ? ' disabled' : '') + '>' + (Backend.loadingOlder ? 'লোড হচ্ছে…' : 'আগের মেসেজ দেখো') + '</button>';
+  ms.forEach(m => {
+    const d = fmtD(m.t); if (d !== lastD) { h += '<div class="day">' + d + '</div>'; lastD = d; prev = null; }
+    const mine = m.u === me, first = !prev || prev.u !== m.u, c = CFG.people[m.u].color;
+    h += '<div class="m' + (mine ? ' me' : '') + (m.id === newId ? ' new' : '') + '" data-id="' + m.id + '" style=""margin-top:' + (first ? 8 : 0) + 'px;--c:' + c + '">' +
+      (mine ? '' : first ? '<div class="a">' + avatar(m.u) + '</div>' : '<div class="sp"></div>') +
+      '<div class="bub">' + (!mine && first ? '<div class="n">' + m.u + '</div>' : '') +
+      (m.files || []).map(fileHtml).join('') + (m.text ? '<div class="tx">' + hl(m.text) + '</div>' : '') +
+      '<time>' + (m.pending ? '⏳ ' : '') + (m.edited ? 'edited · ' : '') + fmtT(m.t) + '</time><div class="rx">' + rxHtml(m) + '</div></div></div>';
+    prev = m;
+  });
+  const keep = actEl ? actEl.dataset.id : null;
+      box.innerHTML = h;
+      if (keep) { const t = box.querySelector('.m[data-id="' + keep + '"]'); if (t && actEl) t.after(actEl); else closeAct(); }
+  box.querySelectorAll('.vph').forEach(e => e.replaceWith(makeVP(e.dataset.src, false)));
+}
+let stickT;
+function scrollEnd() { const b = $('msgs'); b.style.scrollBehavior = 'auto'; b.scrollTop = b.scrollHeight; }
+function stickBottom(ms = 2500) {
+  stick = true; scrollEnd();
+  requestAnimationFrame(() => { scrollEnd(); requestAnimationFrame(scrollEnd); });
+  [60, 200, 500, 1000].forEach(t => setTimeout(() => stick && scrollEnd(), t));
+  clearTimeout(stickT); stickT = setTimeout(() => stick = false, ms);
+}
+new MutationObserver(() => stick && scrollEnd()).observe($('msgs'), {childList: true, subtree: true});
+const chatOn = () => $('s-chat').classList.contains('on');
+document.addEventListener('visibilitychange', () => { if (!document.hidden && chatOn()) stickBottom(); });
+window.addEventListener('pageshow', () => chatOn() && stickBottom());
+window.addEventListener('focus', () => chatOn() && stickBottom());
+window.addEventListener('popstate', () => setTimeout(() => chatOn() && stickBottom(), 0));
+window.addEventListener('resize', () => chatOn() && scrollEnd());
+$('msgs').addEventListener('scroll', () => { const b = $('msgs'); $('down').classList.toggle('on', b.scrollHeight - b.scrollTop - b.clientHeight > 300); });
+$('down').onclick = () => stickBottom(800);
+['load', 'loadedmetadata', 'error'].forEach(ev => $('msgs').addEventListener(ev, () => stick && scrollEnd(), true));
+
+/* ===== কম্পোজার, অ্যাটাচমেন্ট ===== */
+const inp = $('inp');
+inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 120) + 'px'; Backend.setTyping(me, !!inp.value); updateSend(); });
+inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } });
+$('send').onclick = e => { if ($('send').classList.contains('mic')) { e.stopPropagation(); $('vmenu').classList.toggle('on'); } else sendMsg(); };
+$('vmenu').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('vmenu').classList.remove('on'); if (b.dataset.a === 'rec') startRec(); else $('f-aud').click(); });
+$('f-aud').addEventListener('change', e => { [...e.target.files].forEach(sendAudio); e.target.value = ''; });
+/* অডিও ফাইল আপলোড এখন বন্ধ (Firebase Storage চালু নেই) */
+function sendAudio() { mediaOff(); }
+function updateSend() { $('send').classList.toggle('mic', !inp.value.trim() && !pending.length && !editId); }
+$('plus').onclick = e => { e.stopPropagation(); const o = $('menu').classList.toggle('on'); $('plus').classList.toggle('open', o); };
+document.addEventListener('click', e => {
+  if (!e.target.closest('#vmenu')) $('vmenu').classList.remove('on');
+  if (!e.target.closest('#menu')) { $('menu').classList.remove('on'); $('plus').classList.remove('open'); }
+  if (!e.target.closest('#dd,#mbtn')) $('dd').classList.remove('on');
+});
+$('menu').addEventListener('click', e => { const b = e.target.closest('button'); if (b) $('f-' + b.dataset.k).click(); });
+['img', 'vid', 'doc', 'cam'].forEach(k => $('f-' + k).addEventListener('change', e => { addPending([...e.target.files]); e.target.value = ''; }));
+
+function addPending() { mediaOff(); }
+function renderPre() {
+  const p = $('pre'); p.classList.toggle('on', !!pending.length); updateSend();
+  p.innerHTML = pending.map((x, i) => {
+    const k = kind(x.file);
+    const v = k === 'img' ? '<img src="' + x.prev + '">' : k === 'vid' ? '<video src="' + x.prev + '#t=0.1" muted></video>' : '<div class="ic">📄</div>';
+    return '<div class="chip">' + v + '<p>' + esc(x.file.name) + '</p><p style="color:var(--mut)">' + size(x.file.size) + '</p><button data-i="' + i + '" aria-label="Remove">✕</button></div>';
+  }).join('');
+}
+$('pre').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { URL.revokeObjectURL(pending[+b.dataset.i].prev); pending.splice(+b.dataset.i, 1); renderPre(); } });
+
+function post(text, items) { if (items && items.length) return mediaOff(); return Backend.add(text); }
+async function sendMsg() {
+  const text = inp.value.trim(); if (!text && !pending.length) return;
+  if (editId) { const id = editId; if (text) { Backend.edit(id, text).catch(e => toast(errMsg(e), true)); stickBottom(1200); } cancelEdit(); return; }
+  if (!text) return mediaOff();
+  const btn = $('send'); btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
+  inp.value = ''; inp.style.height = 'auto'; pending = []; renderPre(); Backend.setTyping(me, false);
+  try { await post(text, []); } catch (e) { toast(errMsg(e), true); if (!inp.value) { inp.value = text; inp.dispatchEvent(new Event('input')); } }   // ব্যর্থ হলে লেখাটা ফিরে আসে
+}
+
+/* ===== ভয়েস রেকর্ড (WhatsApp-এর মতো: পজ, ডিলিট, সেন্ড) ===== */
+let rec = null;
+const recT = r => (r.acc + (r.paused ? 0 : Date.now() - r.t0)) / 1000;
+async function startRec() {
+  if (!rec) return mediaOff();   // ভয়েস আপলোড এখন বন্ধ (Firebase Storage চালু নেই)
+  if (rec || !navigator.mediaDevices || !window.MediaRecorder) return toast('রেকর্ড চালু হয়নি — অডিও ফাইল বেছে নাও', true);
+  let st; try { st = await navigator.mediaDevices.getUserMedia({audio: true}); } catch (e) { return toast('মাইক চালু হয়নি — অডিও ফাইল বেছে নাও', true); }
+  const mr = new MediaRecorder(st), r = rec = {mr, chunks: [], acc: 0, t0: Date.now(), paused: false, send: false};
+  mr.ondataavailable = e => e.data.size && r.chunks.push(e.data);
+  mr.onstop = () => { st.getTracks().forEach(t => t.stop()); if (r.send && r.dur > .6) { const b = new Blob(r.chunks, {type: mr.mimeType || 'audio/webm'}); post('', [{file: b, name: 'Voice message', prev: URL.createObjectURL(b), dur: r.dur}]); } };
+  mr.start(); $('comp').classList.add('recording'); $('recbar').classList.remove('p'); $('rpz').innerHTML = IC.pause; tickRec(); r.iv = setInterval(tickRec, 250);
+}
+function tickRec() { if (rec) $('rt').textContent = fmtS(recT(rec)); }
+function stopRec(send) { const r = rec; if (!r) return; clearInterval(r.iv); r.dur = recT(r); r.send = send; rec = null; $('comp').classList.remove('recording'); if (r.mr.state !== 'inactive') r.mr.stop(); }
+$('rdel').onclick = () => stopRec(false); $('rsend').onclick = () => stopRec(true);
+$('rpz').onclick = () => { if (!rec) return; if (rec.paused) { rec.t0 = Date.now(); rec.mr.resume(); } else { rec.acc += Date.now() - rec.t0; rec.mr.pause(); } rec.paused = !rec.paused; $('recbar').classList.toggle('p', rec.paused); $('rpz').innerHTML = rec.paused ? IC.play : IC.pause; };
+$('rdel').innerHTML = IC.trash; $('rsend').innerHTML = document.querySelector('#send .pl').outerHTML;
+$('wave').innerHTML = '<i></i>'.repeat(22); [...$('wave').children].forEach((e, i) => { e.style.animationDelay = (-i * .11) + 's'; e.style.animationDuration = (.7 + Math.random() * .8) + 's'; });
+
+/* ===== ভয়েস মেসেজ প্লেয়ার: ১×/১.৫×/২×, ১০ সেকেন্ড আগে-পিছে ===== */
+const vpDur = (vp, a) => isFinite(a.duration) && a.duration > 0 ? a.duration : (+vp.dataset.dur || 0);
+$('msgs').addEventListener('click', e => {
+  const b = e.target.closest('[data-v]'); if (!b) return;
+  const vp = b.closest('.vp'), a = vp.querySelector('audio'), d = vpDur(vp, a), v = b.dataset.v;
+  if (v === 'play') { if (a.paused) { document.querySelectorAll('.vp audio').forEach(x => x !== a && x.pause()); a.play(); } else a.pause(); }
+  else if (v === 'back') a.currentTime = Math.max(0, a.currentTime - 10);
+  else if (v === 'fwd') a.currentTime = Math.min(d || 1e9, a.currentTime + 10);
+  else { const r = a.playbackRate >= 2 ? 1 : a.playbackRate >= 1.5 ? 2 : 1.5; a.playbackRate = r; b.textContent = r + '×'; }
+});
+$('msgs').addEventListener('input', e => { if (!e.target.classList.contains('vr')) return; const vp = e.target.closest('.vp'), a = vp.querySelector('audio'), d = vpDur(vp, a); if (d) a.currentTime = d * e.target.value / 1000; });
+['timeupdate', 'play', 'pause', 'ended', 'loadedmetadata'].forEach(ev => $('msgs').addEventListener(ev, e => {
+  const a = e.target; if (a.tagName !== 'AUDIO') return; const vp = a.closest('.vp');
+  if (ev === 'loadedmetadata' && !isFinite(a.duration)) { a.currentTime = 1e7; a.addEventListener('timeupdate', () => a.currentTime = 0, {once: true}); return; }
+  const d = vpDur(vp, a); vp.querySelector('.vr').value = d ? Math.min(1000, a.currentTime / d * 1000) : 0;
+  vp.querySelector('.vc').textContent = fmtS(a.paused && a.currentTime === 0 ? d : a.currentTime); vp.querySelector('.pp').innerHTML = a.paused ? IC.play : IC.pause;
+}, true));
+
+/* ===== ভিডিও প্লেয়ার (চ্যাটে ছোট, বড় করলে পূর্ণ কন্ট্রোল) ===== */
+function makeVP(src, big, t0) {
+  const w = document.createElement('div'); w.className = 'vw' + (big ? ' big' : '');
+  w.innerHTML = '<video src="' + src + '" playsinline preload="metadata"></video><button class="pc" aria-label="Play">' + IC.play + '</button><div class="pbar">' + (big ? '<button data-p="back" aria-label="Back 10s">' + IC.b10 + '</button>' : '') + '<button data-p="play" aria-label="Play">' + IC.play + '</button>' + (big ? '<button data-p="fwd" aria-label="Forward 10s">' + IC.f10 + '</button>' : '') + '<input type="range" min="0" max="1000" value="0" aria-label="Seek"><span class="tm">0:00</span>' + (big ? '<button class="sp" data-p="spd">1×</button>' : '<button data-p="exp" aria-label="Expand">' + IC.exp + '</button>') + '</div>';
+  const v = w.querySelector('video'), r = w.querySelector('input'), tm = w.querySelector('.tm'), pb = w.querySelector('[data-p=play]'), tog = () => v.paused ? v.play() : v.pause();
+  const upd = () => { const d = v.duration; r.value = d ? v.currentTime / d * 1000 : 0; tm.textContent = fmtS(v.currentTime) + (big && isFinite(d) ? ' / ' + fmtS(d) : ''); };
+  v.onplay = v.onpause = () => { pb.innerHTML = v.paused ? IC.play : IC.pause; w.classList.toggle('pl', !v.paused); };
+  v.ontimeupdate = v.onloadedmetadata = upd; v.onclick = w.querySelector('.pc').onclick = tog;
+  r.oninput = () => { if (v.duration) v.currentTime = v.duration * r.value / 1000; };
+  w.onclick = e => { const b = e.target.closest('[data-p]'); if (!b) return; const p = b.dataset.p;
+    if (p === 'play') tog(); else if (p === 'back') v.currentTime = Math.max(0, v.currentTime - 10); else if (p === 'fwd') v.currentTime = Math.min(v.duration, v.currentTime + 10);
+    else if (p === 'spd') { const x = v.playbackRate >= 2 ? 1 : v.playbackRate >= 1.5 ? 2 : 1.5; v.playbackRate = x; b.textContent = x + '×'; }
+    else if (p === 'exp') { const t = v.currentTime; v.pause(); openLb('vid', src, t); } };
+  if (t0) v.addEventListener('loadedmetadata', () => v.currentTime = t0, {once: true});
+  if (big) v.play().catch(() => {});
+  return w;
+}
+function openLb(k, src, t) { $('lbc').replaceChildren(k === 'vid' ? makeVP(src, true, t) : Object.assign(document.createElement('img'), {src})); $('lb').classList.add('on'); }
+
+/* ===== টাইপিং ইন্ডিকেটর: শুধু ছবি + ডট (নাম লেখা হয় না) ===== */
+const typers = {};
+function drawTyping() {
+  const now = Date.now(), who = Object.keys(typers).filter(n => typers[n] > now && n !== me), key = who.join();
+  if (drawTyping.k !== key) { drawTyping.k = key; $('tav').innerHTML = who.map(n => '<div>' + avatar(n) + '</div>').join(''); }
+  $('typ').classList.toggle('on', !!who.length);
+}
+function remoteTyping(n, on) { if (on) typers[n] = Date.now() + 4000; else delete typers[n]; drawTyping(); clearTimeout(remoteTyping.t); remoteTyping.t = setTimeout(drawTyping, 4100); }
+
+/* ===== মেনু ও নিশ্চিতকরণ ===== */
+$('mbtn').onclick = e => { e.stopPropagation(); $('dd').classList.toggle('on'); };
+$('dd').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $('dd').classList.remove('on'); ({search: toggleSearch, info: openInfo, clear: () => $('cfm').classList.add('on')})[b.dataset.a](); });
+function toggleSearch() { const on = $('sb').classList.toggle('on'); if (on) $('sq').focus(); else closeSearch(); }
+function closeSearch() { $('sb').classList.remove('on'); $('sq').value = ''; query = ''; renderAll(); }
+$('sq').oninput = () => { query = $('sq').value.trim().toLowerCase(); renderAll(); };
+$('sx').onclick = closeSearch;
+$('msgs').addEventListener('click', e => {
+  if (e.target.closest('.retry')) return Backend.start();
+  if (e.target.closest('.older')) { const b = $('msgs'), h = b.scrollHeight, t = b.scrollTop; Backend.loadOlder().then(() => { b.style.scrollBehavior = 'auto'; b.scrollTop = t + (b.scrollHeight - h); }); }
+});
+/* গ্রুপ ইনফো */
+function openInfo() {
+  const c = k => vis().reduce((a, m) => a + (m.files || []).filter(f => kind(f) === k).length, 0);
+  $('ibody').innerHTML = '<div class="big">' + pic(CFG.logo, 'D', '#37d9ae') + '</div><h2>' + CFG.group + '</h2><p>' + CFG.desc + '</p>' +
+    '<div class="box">' + NAMES.map(n => '<div class="mem"><div class="a">' + avatar(n) + '</div><b>' + n + (n === me ? ' (You)' : '') + '</b></div>').join('') + '</div>' +
+    '<div class="box">' + [['img', 'Photos'], ['vid', 'Videos'], ['doc', 'Documents']].map(x => '<button data-g="' + x[0] + '">' + x[1] + '<span class="ct">' + c(x[0]) + ' ›</span></button>').join('') + '</div>' +
+    '<div class="box"><button data-g="clear" style="color:#e0476b">Clear chat<span class="ct">সব মেসেজ মুছে ফেলো</span></button></div>';
+  $('info').classList.add('on');
+}
+$('ibody').addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; if (b.dataset.g === 'clear') return $('cfm').classList.add('on'); galTab = b.dataset.g; $('info').classList.remove('on'); openGal(); });
+$('ginfo').onclick = openInfo; $('iclose').onclick = () => $('info').classList.remove('on');
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLb(); closeAct(); ['gal', 'info', 'pwm', 'cfm', 'dlg', 'emo'].forEach(i => $(i).classList.remove('on')); } });
+$('cno').onclick = () => $('cfm').classList.remove('on');
+$('cyes').onclick = () => { Backend.clear(); renderAll(); stickBottom(800); $('cfm').classList.remove('on'); toast('চ্যাট মুছে গেছে ✓'); };
+
+/* ===== মেসেজ অ্যাকশন: ডাবল ট্যাপ → ইমোজি, ডিলিট, এডিট, কপি ===== */
+const clearedAt = () => { try { return +localStorage.getItem(clrKey()) || 0; } catch (e) { return 0; } };
+const vis = () => { const c = clearedAt(); return Backend.msgs.filter(m => !(m.hid || []).includes(me) && m.t > c); };
+const byId = id => Backend.msgs.find(x => x.id === id);
+let actEl = null, lastTap = {t: 0, id: null}, emoTarget = null;
+const AI = {
+  plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  edit: '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>',
+  copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="3"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>'
+};
+function rxHtml(m) {
+  const g = {}; for (const [u, e] of Object.entries(m.r || {})) (g[e] = g[e] || []).push(u);
+  return Object.keys(g).map(e => '<button class="rc' + (g[e].includes(me) ? ' mine' : '') + '" data-rx="' + e + '" title="' + g[e].join(', ') + '">' + e + (g[e].length > 1 ? ' ' + g[e].length : '') + '</button>').join('');
+}
+function openAct(mEl) {
+  closeAct(); const m = byId(mEl.dataset.id); if (!m) return; const mine = m.u === me, has = !!m.text;
+  const el = document.createElement('div'); el.className = 'act' + (mine ? ' me' : ''); el.dataset.id = m.id;
+  el.innerHTML = '<div class="emr">' + ['👍', '❤️', '😂', '😮', '😢', '🙏'].map((x, i) => '<button class="em1' + ((m.r || {})[me] === x ? ' sel' : '') + '" style="--i:' + i + '" data-ac="r" data-e="' + x + '">' + x + '</button>').join('') +
+    '<button class="em1 pl2" style="--i:6" data-ac="more" aria-label="More emoji">' + AI.plus + '</button></div><div class="acr">' +
+    '<button class="a-del" data-ac="del"><b>' + IC.trash + '</b>Delete</button>' + (mine && has ? '<button class="a-ed" data-ac="edit"><b>' + AI.edit + '</b>Edit</button>' : '') + (has ? '<button class="a-cp" data-ac="copy"><b>' + AI.copy + '</b>Copy</button>' : '') + '</div>';
+  mEl.after(el); actEl = el; el.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+}
+function closeAct() { if (actEl) { actEl.remove(); actEl = null; } }
+function react(id, em) {
+  if (!byId(id)) return; Backend.react(id, em).catch(e => toast(errMsg(e), true)); closeAct();
+}
+function dlg(title, text, btns) {
+  $('dt').textContent = title; $('dp').textContent = text; $('db').innerHTML = '';
+  btns.forEach(([l, cls, fn]) => { const b = document.createElement('button'); b.textContent = l; b.className = 'dbtn ' + cls + ' press'; b.onclick = () => { $('dlg').classList.remove('on'); fn && fn(); }; $('db').appendChild(b); });
+  $('dlg').classList.add('on');
+}
+function askDelete(id) {
+  const m = byId(id); if (!m) return; closeAct();
+  const forMe = ['Delete for me', '', () => { Backend.hide(id).then(() => toast('Deleted for you ✓'), e => toast(errMsg(e), true)); stickBottom(1200); }];
+  const all = ['Delete for everyone', 'red', () => { Backend.remove(id).then(() => toast('Message deleted ✓'), e => toast(errMsg(e), true)); stickBottom(1200); }];
+  dlg('Delete message?', m.u === me ? '' : 'এটা শুধু তোমার চ্যাট থেকে মুছবে।', m.u === me ? [all, forMe, ['Cancel', '']] : [forMe, ['Cancel', '']]);
+}
+function copyText(t) {
+  const fb = () => { const a = document.createElement('textarea'); a.value = t; a.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); toast('Copied ✓'); } catch (e) { toast('Copy failed', true); } a.remove(); };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(() => toast('Copied ✓'), fb); else fb();
+}
+function startEdit(id) { const m = byId(id); if (!m) return; closeAct(); editId = id; $('eb').classList.add('on'); inp.value = m.text; inp.dispatchEvent(new Event('input')); inp.focus(); }
+function cancelEdit() { if (!editId) return; editId = null; $('eb').classList.remove('on'); inp.value = ''; inp.style.height = 'auto'; updateSend(); }
+$('ebx').onclick = cancelEdit;
+$('msgs').addEventListener('click', e => {
+  const mEl = e.target.closest('.m'), rc = e.target.closest('[data-rx]'), ab = e.target.closest('[data-ac]');
+  if (rc && mEl) return react(mEl.dataset.id, rc.dataset.rx);
+  if (ab) { const id = ab.closest('.act').dataset.id, a = ab.dataset.ac; if (a === 'r') react(id, ab.dataset.e); else if (a === 'more') { emoTarget = id; $('emo').classList.add('on'); drawEmo(0); } else if (a === 'del') askDelete(id); else if (a === 'edit') startEdit(id); else if (a === 'copy') { copyText(byId(id).text); closeAct(); } return; }
+  if (e.target.closest('.act')) return;
+  if (!mEl || e.target.closest('button,input,a,[data-open],.vw,.vp')) { closeAct(); return; }
+  const now = Date.now();
+  if (lastTap.id === mEl.dataset.id && now - lastTap.t < 400) { lastTap = {t: 0, id: null}; openAct(mEl); }   // ডাবল ট্যাপ/ক্লিক
+  else { lastTap = {t: now, id: mEl.dataset.id}; if (actEl && actEl.dataset.id !== mEl.dataset.id) closeAct(); }
+});
+/* ইমোজি ড্রয়ার (সব ধরনের ইমোজি) */
+const EMO = [
+  ['😀', [[0x1F600, 0x1F64F], [0x1F910, 0x1F92F], [0x1F970, 0x1F97A], [0x1FAE0, 0x1FAE7]]],
+  ['👍', [[0x1F446, 0x1F450], [0x1F918, 0x1F91F], 0x1F4AA, 0x1F440, 0x1F9E0, [0x1F466, 0x1F469], 0x1F47B, 0x1F47D, 0x1F480, 0x1F4A9]],
+  ['❤️', [[0x1F493, 0x1F49F], 0x1F90D, 0x1F90E, 0x1F9E1, 0x2763, 0x2728, 0x2B50, 0x1F525, 0x1F4AF, 0x1F4A5, 0x1F4AB, 0x1F4A2, 0x1F4A4, 0x2705, 0x274C, 0x2753, 0x2757, 0x1F389, 0x1F38A, 0x1F381]],
+  ['🐶', [[0x1F400, 0x1F43E], [0x1F980, 0x1F991]]],
+  ['🍔', [[0x1F345, 0x1F37F], [0x1F950, 0x1F96B]]],
+  ['⚽', [[0x1F380, 0x1F393], [0x1F3A0, 0x1F3CA], [0x1F4A1, 0x1F4A8], [0x1F4DA, 0x1F4F7]]],
+  ['🌍', [[0x1F300, 0x1F320], [0x1F330, 0x1F344], [0x1F680, 0x1F6A4]]]
+];
+const emojis = c => c[1].flatMap(x => Array.isArray(x) ? Array.from({length: x[1] - x[0] + 1}, (_, i) => x[0] + i) : [x]).map(cp => String.fromCodePoint(cp) + (cp < 0x10000 ? '\uFE0F' : ''));
+function drawEmo(i) { [...$('etabs').children].forEach((b, j) => b.classList.toggle('on', i === j)); $('egrid').innerHTML = emojis(EMO[i]).map(x => '<button>' + x + '</button>').join(''); $('egrid').scrollTop = 0; }
+$('etabs').innerHTML = EMO.map((c, i) => '<button data-i="' + i + '">' + c[0] + '</button>').join('');
+$('etabs').onclick = e => { const b = e.target.closest('button'); if (b) drawEmo(+b.dataset.i); };
+$('egrid').onclick = e => { const b = e.target.closest('button'); if (!b) return; $('emo').classList.remove('on'); react(emoTarget, b.textContent); };
+$('emo').onclick = e => { if (e.target === $('emo')) $('emo').classList.remove('on'); };
+
+/* ===== গ্যালারি ===== */
+function openGal() { [...$('tabs').children].forEach(x => x.classList.toggle('on', x.dataset.t === galTab)); $('gal').classList.add('on'); drawGal(); }
+function drawGal() {
+  const all = vis().flatMap(m => (m.files || []).map(f => ({...f, u: m.u}))).filter(f => kind(f) === galTab).reverse();
+  const g = $('grid'); const lbl = {img: 'ছবি', vid: 'ভিডিও', doc: 'ফাইল'}[galTab];
+  if (!all.length) { g.innerHTML = '<div class="empty" style="grid-column:1/-1;aspect-ratio:auto;border:0;background:none"><div>📂</div><p>কোনো ' + lbl + ' নেই</p></div>'; return; }
+  g.innerHTML = all.map(f => !f.url ? '<div class="d">⚠<br>ফাইল পাওয়া যাচ্ছে না<br>' + esc(f.name) + '</div>' :
+    galTab === 'img' ? '<img src="' + f.url + '" data-open data-k="img" decoding="async" alt="' + esc(f.name) + '">' :
+    galTab === 'vid' ? '<video src="' + f.url + '#t=0.1" preload="metadata" data-open data-k="vid" muted></video>' :
+    '<a class="d" href="' + f.url + '" download="' + esc(f.name) + '" target="_blank"><span style="font-size:30px">📄</span>' + esc(f.name) + '<small>' + size(f.size) + '</small></a>').join('');
+}
+$('gbtn').onclick = openGal; $('gclose').onclick = () => $('gal').classList.remove('on');
+$('tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; galTab = b.dataset.t; [...$('tabs').children].forEach(x => x.classList.toggle('on', x === b)); drawGal(); });
+
+/* লাইটবক্স (চ্যাট ও গ্যালারি—দুই জায়গা থেকেই) */
+document.addEventListener('click', e => { const t = e.target.closest('[data-open]'); if (t) openLb(t.dataset.k, t.currentSrc || t.src); });
+const closeLb = () => { $('lb').classList.remove('on'); $('lbc').innerHTML = ''; };
+$('lbx').onclick = closeLb; $('lb').onclick = e => { if (e.target === $('lb')) closeLb(); };
+</script>
+</body>
+</html>
